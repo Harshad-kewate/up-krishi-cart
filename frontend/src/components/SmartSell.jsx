@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Package, IndianRupee, ShoppingCart, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const SmartSell = ({ mode = 'sell' }) => {
   const isBuy = mode === 'buy';
+  const navigate = useNavigate();
   const [selectedQty, setSelectedQty] = useState(20);
+  const [customQty, setCustomQty] = useState('');
 
   const availableProducts = [
     { name: 'Tomatoes', icon: '🍅', stock: 50 },
@@ -15,16 +18,34 @@ const SmartSell = ({ mode = 'sell' }) => {
   const [basePrice, setBasePrice] = useState(20);
 
   // Pricing rules
-  const pricing = {
-    1: basePrice,
-    5: Math.round(basePrice * 0.9),
-    10: Math.round(basePrice * 0.85),
-    20: Math.round(basePrice * 0.8)
+  const calculatePrice = (qty) => {
+    if (qty >= 20) return Math.round(basePrice * 0.8);
+    if (qty >= 10) return Math.round(basePrice * 0.85);
+    if (qty >= 5) return Math.round(basePrice * 0.9);
+    return basePrice;
   };
 
   const quantities = [1, 5, 10, 20];
-  const currentPricePerKg = pricing[selectedQty] || 20;
+  const currentPricePerKg = calculatePrice(selectedQty);
   const totalPrice = selectedQty * currentPricePerKg;
+
+  const handleTransaction = () => {
+    if (isBuy) {
+      navigate('/checkout', { 
+        state: { 
+          product: { 
+            ...product, 
+            price: currentPricePerKg, 
+            quantity: selectedQty, 
+            farmer: 'Ramesh Kumar', 
+            location: 'Nashik, MH' 
+          } 
+        } 
+      });
+    } else {
+      alert(`Successfully listed ${selectedQty} kg of ${product.name} for sale at ₹${currentPricePerKg}/kg!`);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-8">
@@ -86,13 +107,13 @@ const SmartSell = ({ mode = 'sell' }) => {
 
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-3">Select Quantity to {isBuy ? 'Buy' : 'Sell'}</label>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center">
               {quantities.map(qty => (
                 <button
                   key={qty}
-                  onClick={() => setSelectedQty(qty)}
+                  onClick={() => { setSelectedQty(qty); setCustomQty(''); }}
                   className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
-                    selectedQty === qty 
+                    selectedQty === qty && customQty === ''
                       ? 'bg-primary text-white border-primary shadow-md shadow-primary/20' 
                       : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40 hover:bg-slate-50'
                   }`}
@@ -100,6 +121,23 @@ const SmartSell = ({ mode = 'sell' }) => {
                   {qty} kg
                 </button>
               ))}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-600 ml-1">Custom:</span>
+                <input 
+                  type="number" 
+                  min="1"
+                  value={customQty}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setCustomQty(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                      setSelectedQty(val);
+                    }
+                  }}
+                  placeholder="kg"
+                  className="w-24 px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm font-bold text-slate-700 bg-white shadow-sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -124,7 +162,10 @@ const SmartSell = ({ mode = 'sell' }) => {
                 {isBuy ? 'Nashik, MH • ⭐ 4.8' : 'Mumbai, MH • 📍 15 km away'}
               </p>
             </div>
-            <button className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors">
+            <button 
+              onClick={() => alert(`Viewing profile for ${isBuy ? 'Ramesh Kumar' : 'Amit Sharma'}`)}
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors"
+            >
               View
             </button>
           </div>
@@ -136,9 +177,9 @@ const SmartSell = ({ mode = 'sell' }) => {
           
           <div className="space-y-3">
             {[
-              { qty: 1, price: pricing[1] },
-              { qty: 5, price: pricing[5] },
-              { qty: 20, price: pricing[20], highlight: true }
+              { qty: 1, price: calculatePrice(1) },
+              { qty: 5, price: calculatePrice(5) },
+              { qty: 20, price: calculatePrice(20), highlight: true }
             ].map((rule) => (
               <div 
                 key={rule.qty} 
@@ -164,10 +205,16 @@ const SmartSell = ({ mode = 'sell' }) => {
           </div>
 
           <div className="pt-4 mt-2 border-t border-slate-200 grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold transition-all shadow-sm">
+            <button 
+              onClick={() => alert(`Applying ${isBuy ? 'Best Offer' : 'Auto Price'}`)}
+              className="flex items-center justify-center gap-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold transition-all shadow-sm"
+            >
               <Sparkles className="w-4 h-4" /> {isBuy ? 'Best Offer' : 'Auto Price'}
             </button>
-            <button className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-bold transition-all shadow-md shadow-primary/20">
+            <button 
+              onClick={handleTransaction}
+              className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-bold transition-all shadow-md shadow-primary/20"
+            >
               <ShoppingCart className="w-4 h-4" /> {isBuy ? 'Buy Selected' : 'Sell Selected'}
             </button>
           </div>

@@ -114,6 +114,186 @@
       "_id": "4bae5bc0-bfcc-4494-bfcd-2c7f4cd437fb",
       "createdAt": "2026-05-14T03:57:53.487Z",
       "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "55555222",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "a2e20f5c-689c-418a-837d-90bdd99dbaec",
+      "createdAt": "2026-05-14T05:24:57.646Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "5111515",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "42dfc6d9-81b9-413b-af04-f633168e780b",
+      "createdAt": "2026-05-14T05:33:45.725Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "52023",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "9ed10a85-c67b-4acb-9a1c-bc08ce58c922",
+      "createdAt": "2026-05-14T05:55:47.574Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "45201",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "a141476c-f6c7-47db-9d74-5b11aae91fdb",
+      "createdAt": "2026-05-14T06:03:29.353Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "1532",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "42fd9cc5-9cc7-47e2-a5db-ad230a5e6e4a",
+      "createdAt": "2026-05-14T06:03:46.180Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "1563",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "d8b09889-b507-4827-8eaf-7a0a4f5c6d5b",
+      "createdAt": "2026-05-14T06:05:19.800Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "486935",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "ad894e5f-6a37-4f1a-9a45-bf5acf55b35d",
+      "createdAt": "2026-05-14T06:07:38.965Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "455626",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "2c2df494-e948-4be7-b05c-2e082e31c68f",
+      "createdAt": "2026-05-14T06:11:33.365Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "54152",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "1ba395d3-f16e-4d9f-b921-a4a3c16cfaa4",
+      "createdAt": "2026-05-14T06:17:26.063Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "1530",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "8131dd16-dd4a-4898-8dba-b848a4ebd0f5",
+      "createdAt": "2026-05-14T06:17:44.518Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "51510",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "7621dd71-d1dd-4f9b-ba96-0b9270a29d52",
+      "createdAt": "2026-05-14T06:22:57.394Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "1652",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "b05b956f-2d15-4f91-8e50-c3a22c1f1128",
+      "createdAt": "2026-05-14T06:23:40.463Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "15323",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "e63a3d85-b454-49ed-ab45-29f6cebc3f92",
+      "createdAt": "2026-05-14T06:24:12.507Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "5233",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "2515dd2a-e03a-4426-86a0-68ce72ddd251",
+      "createdAt": "2026-05-14T06:27:57.902Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "53223",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "805b3735-7f2f-471e-a00a-cbc2556abe28",
+      "createdAt": "2026-05-14T07:01:50.693Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "45511",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "70ac2289-550a-4d8c-8d34-f1ad94c631a7",
+      "createdAt": "2026-05-14T07:20:13.520Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Consumer",
+      "phoneOrEmail": "4521",
+      "password": "mockpassword",
+      "role": "consumer",
+      "aadharNumber": "000000000000",
+      "_id": "15f2a941-d4bc-49cb-9a6b-0523a74abde9",
+      "createdAt": "2026-05-14T07:22:09.131Z",
+      "_collectionName": "users"
+    },
+    {
+      "name": "Demo Farmer",
+      "phoneOrEmail": "4515",
+      "password": "mockpassword",
+      "role": "farmer",
+      "aadharNumber": "000000000000",
+      "_id": "05479a4d-76e9-4bfb-8010-a26d88dbcbeb",
+      "createdAt": "2026-05-14T07:24:04.030Z",
+      "_collectionName": "users"
     }
   ],
   "chatHistory": [
@@ -133,6 +313,24 @@
       "language": "Hindi",
       "_id": "dbb265f6-48ea-4224-8725-375c33c44844",
       "createdAt": "2026-05-13T19:56:13.074Z",
+      "_collectionName": "chatHistory"
+    },
+    {
+      "userId": "anonymous",
+      "sender": "user",
+      "message": "hello",
+      "language": "English",
+      "_id": "9322eec4-b714-4a26-8ba0-0e33235ecf93",
+      "createdAt": "2026-05-14T05:23:44.052Z",
+      "_collectionName": "chatHistory"
+    },
+    {
+      "userId": "anonymous",
+      "sender": "bot",
+      "message": "I am Krishi Cart AI. Please configure GEMINI_API_KEY in the backend .env file to enable full AI responses. For now, I can help with basic orders and mandi prices!",
+      "language": "English",
+      "_id": "9bcea976-37b2-4306-8fe7-c459c9820301",
+      "createdAt": "2026-05-14T05:23:44.053Z",
       "_collectionName": "chatHistory"
     }
   ],

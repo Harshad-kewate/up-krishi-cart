@@ -1,10 +1,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from 'react';
-import { PlusCircle, Package, IndianRupee, TrendingUp, TrendingDown, CheckCircle, Clock, Sparkles, Mic, MapPin, Banknote, CreditCard, X, Truck, Zap, Edit2, Trash2, AlertTriangle, Save, UploadCloud, Leaf, Droplets, FlaskConical } from 'lucide-react';
+import { PlusCircle, Package, IndianRupee, TrendingUp, TrendingDown, CheckCircle, Clock, Sparkles, Mic, MapPin, Banknote, CreditCard, X, Truck, Zap, Edit2, Trash2, AlertTriangle, Save, UploadCloud, Leaf } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../context/LocationContext';
 import SmartSell from '../components/SmartSell';
+import SmartFarmingAssistant from '../components/SmartFarmingAssistant';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -45,42 +46,57 @@ const FarmerDashboard = () => {
 
   const [isListening, setIsListening] = useState(false);
   const [dataSource, setDataSource] = useState('mock');
-  
-  // Crop Recommendation State
-  const [cropParams, setCropParams] = useState({ N: '', P: '', K: '', temperature: '', humidity: '', ph: '', rainfall: '' });
-  const [cropPrediction, setCropPrediction] = useState(null);
-  const [isPredictingCrop, setIsPredictingCrop] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/products');
-      const data = await res.json();
-      setInventory(data);
+      if (res.ok) {
+        const data = await res.json();
+        setInventory(data);
+      } else {
+        console.error('Failed to fetch products:', res.status);
+        setInventory([]);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setInventory([]);
     }
   }, []);
 
   const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/orders');
-      const data = await res.json();
-      setOrders(data);
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+      } else {
+        console.error('Failed to fetch orders:', res.status);
+        setOrders([]);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setOrders([]);
     }
   }, []);
 
   const fetchMandiPrices = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/mandi-prices?city=${encodeURIComponent(selectedLocation)}`);
-      const data = await res.json();
-      setDataSource(data.source || 'mock');
-      if (data && data.records) {
-        setMandiPrices(data.records);
+      if (res.ok) {
+        const data = await res.json();
+        setDataSource(data.source || 'mock');
+        if (data && data.records) {
+          setMandiPrices(data.records);
+        } else {
+          setMandiPrices([]);
+        }
+      } else {
+        console.error('Failed to fetch mandi prices:', res.status);
+        setMandiPrices([]);
       }
     } catch (error) {
       console.error('Error fetching mandi prices:', error);
+      setMandiPrices([]);
     }
   }, [selectedLocation]);
 
@@ -169,6 +185,11 @@ const FarmerDashboard = () => {
       const [defaultLat, defaultLng] = getCoordinates(selectedLocation);
       submitProduct(defaultLat, defaultLng);
     }
+  };
+
+  const handleAISuggestion = async () => {
+    // TODO: Implement AI price suggestion
+    setSuggestedPrice(25); // Placeholder
   };
 
   const handleBulkUpload = (e) => {
@@ -267,57 +288,22 @@ const FarmerDashboard = () => {
     }
   };
 
-  const handleAISuggestion = async () => {
-    if (!newItem.name) {
-      alert("Please enter a produce name first!");
-      return;
-    }
-    setIsAnalyzing(true);
-    try {
-      const res = await fetch('http://localhost:5000/api/predict-price', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ produceName: newItem.name, currentStock: newItem.qty || '0' })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setNewItem({...newItem, price: data.suggestedPrice});
-        setSuggestedPrice(data.suggestedPrice);
-      }
-    } catch (error) {
-      console.error("Price prediction error:", error);
-    } finally {
-      setIsAnalyzing(false);
-    }
+  const getWeatherDetails = (code) => {
+    if (code === 0) return { label: 'Clear Sky', icon: '☀️' };
+    if (code === 1 || code === 2 || code === 3) return { label: 'Partly Cloudy', icon: '⛅' };
+    if (code >= 45 && code <= 48) return { label: 'Foggy', icon: '🌫️' };
+    if (code >= 51 && code <= 67) return { label: 'Rain', icon: '🌧️' };
+    if (code >= 71 && code <= 77) return { label: 'Snow', icon: '❄️' };
+    if (code >= 80 && code <= 82) return { label: 'Showers', icon: '🌦️' };
+    if (code >= 95 && code <= 99) return { label: 'Thunderstorm', icon: '⛈️' };
+    return { label: 'Unknown', icon: '❓' };
   };
-
-  const handlePredictCrop = async (e) => {
-    e.preventDefault();
-    setIsPredictingCrop(true);
-    setCropPrediction(null);
-    try {
-      const res = await fetch('http://localhost:5000/api/predict-crop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          N: Number(cropParams.N),
-          P: Number(cropParams.P),
-          K: Number(cropParams.K),
-          temperature: Number(cropParams.temperature),
-          humidity: Number(cropParams.humidity),
-          ph: Number(cropParams.ph),
-          rainfall: Number(cropParams.rainfall)
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setCropPrediction(data);
-      }
-    } catch (error) {
-      console.error("Crop prediction error:", error);
-    } finally {
-      setIsPredictingCrop(false);
-    }
+  
+  const getDayName = (dateString, offset = 0) => {
+     if (offset === 0) return "Today";
+     if (offset === 1) return "Tomorrow";
+     const date = new Date(dateString);
+     return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
   const startVoiceInput = () => {
@@ -526,83 +512,14 @@ const FarmerDashboard = () => {
             </form>
           </div>
 
-          {/* AI Crop Recommendation Form */}
-          <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-6 rounded-2xl border border-emerald-200 shadow-sm relative overflow-hidden">
-            {isPredictingCrop && (
-              <div className="absolute inset-0 bg-white/70 backdrop-blur-md z-10 flex flex-col items-center justify-center rounded-2xl border border-emerald-300">
-                <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-3"></div>
-                <p className="text-emerald-800 font-bold tracking-widest uppercase text-sm animate-pulse">Running ML Model...</p>
-              </div>
-            )}
-            
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-emerald-900 flex items-center gap-2">
-                  <Leaf className="text-emerald-600 w-6 h-6" /> AI Crop Recommendation
-                </h2>
-                <p className="text-sm text-emerald-700 mt-1 font-medium">Enter your soil and weather parameters to get a machine-learning based crop suggestion.</p>
-              </div>
-              <div className="bg-emerald-200/50 p-2 rounded-xl">
-                <FlaskConical className="w-6 h-6 text-emerald-700" />
-              </div>
-            </div>
-
-            <form onSubmit={handlePredictCrop} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Nitrogen (N)</label>
-                <input type="number" required value={cropParams.N} onChange={e => setCropParams({...cropParams, N: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 90" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Phosphorus (P)</label>
-                <input type="number" required value={cropParams.P} onChange={e => setCropParams({...cropParams, P: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 42" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Potassium (K)</label>
-                <input type="number" required value={cropParams.K} onChange={e => setCropParams({...cropParams, K: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 43" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Soil pH</label>
-                <input type="number" step="0.1" required value={cropParams.ph} onChange={e => setCropParams({...cropParams, ph: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 6.5" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Temperature (°C)</label>
-                <input type="number" step="0.1" required value={cropParams.temperature} onChange={e => setCropParams({...cropParams, temperature: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 20.8" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Humidity (%)</label>
-                <input type="number" step="0.1" required value={cropParams.humidity} onChange={e => setCropParams({...cropParams, humidity: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 82.0" />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-xs font-bold text-emerald-800 mb-1">Rainfall (mm)</label>
-                <input type="number" step="0.1" required value={cropParams.rainfall} onChange={e => setCropParams({...cropParams, rainfall: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" placeholder="e.g. 202.9" />
-              </div>
-
-              <div className="col-span-2 md:col-span-4 mt-2">
-                <button type="submit" className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl transition-all shadow-md flex justify-center items-center gap-2">
-                  <Sparkles className="w-4 h-4" /> Predict Best Crop
-                </button>
-              </div>
-            </form>
-
-            {cropPrediction && (
-              <div className="mt-4 p-4 bg-white rounded-xl border border-emerald-200 flex items-center justify-between shadow-sm animate-in zoom-in-95 duration-300">
-                <div>
-                  <p className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-1">AI Recommendation</p>
-                  <p className="text-2xl font-black text-emerald-900">{cropPrediction.crop}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-500 mb-1">Model Confidence</p>
-                  <p className="text-lg font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">{cropPrediction.confidence}</p>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Smart Farming Assistant */}
+          <SmartFarmingAssistant />
 
           {/* Low Stock Alerts */}
           {(() => {
             const lowStockItems = inventory.filter(item => {
-              let stockNum = 0;
               const currentStock = item.stock || item.qty || '0';
+              let stockNum = 0;
               if (typeof currentStock === 'string') {
                 stockNum = parseInt(currentStock.replace(/[^\d]/g, '')) || 0;
               } else {

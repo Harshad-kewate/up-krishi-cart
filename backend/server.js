@@ -607,35 +607,239 @@ app.post('/api/login', async (req, res) => {
 });
 
 // AI Prediction Endpoints
-app.post('/api/predict-crop', (req, res) => {
+// Stable Weather API
+app.get('/api/weather', async (req, res) => {
   try {
-    const { N, P, K, temperature, humidity, ph, rainfall } = req.body;
+    const { lat, lon } = req.query;
     
-    // Simple Rule-Based/Decision-Tree-like mock ML for Crop Recommendation
-    let recommendedCrop = "Wheat";
-    
-    if (temperature > 25 && humidity > 70 && rainfall > 150) {
-      recommendedCrop = "Rice";
-    } else if (ph < 6.5 && N > 50 && K > 30) {
-      recommendedCrop = "Maize";
-    } else if (temperature > 20 && rainfall < 100 && P > 40) {
-      recommendedCrop = "Cotton";
-    } else if (temperature < 20 && humidity < 60) {
-      recommendedCrop = "Mustard";
-    } else if (N > 80 && rainfall > 100) {
-      recommendedCrop = "Sugarcane";
-    } else if (ph > 6.0 && ph < 7.0 && K > 40) {
-      recommendedCrop = "Potato";
-    } else if (temperature > 25 && humidity < 50) {
-      recommendedCrop = "Millets";
+    if (!lat || !lon) {
+      return res.status(400).json({ error: 'Latitude and Longitude are required' });
     }
+
+    // 1. Reverse Geocoding with Nominatim
+    let city = "Unknown Location";
+    let state = "Unknown State";
+    try {
+      const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+      const geoRes = await axios.get(geoUrl, { 
+        timeout: 5000,
+        headers: { 'User-Agent': 'KrishiCartApp/1.0' } // Nominatim requires User-Agent
+      });
+      if (geoRes.data && geoRes.data.address) {
+        city = geoRes.data.address.city || geoRes.data.address.town || geoRes.data.address.village || geoRes.data.address.county || "Local Area";
+        state = geoRes.data.address.state || "Unknown State";
+      }
+    } catch (geoErr) {
+      console.error("Geocoding API Error:", geoErr.message);
+      // Proceed with Unknown location
+    }
+
+    // 2. Fetch current and 3-day forecast from Open-Meteo
+    let current = null;
+    let forecast = [];
     
-    // Simulate AI processing delay
-    setTimeout(() => {
-      res.json({ crop: recommendedCrop, confidence: (Math.random() * 15 + 80).toFixed(1) + "%" });
-    }, 1500);
+    try {
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`;
+      const weatherRes = await axios.get(weatherUrl, { timeout: 8000 });
+      
+      if (weatherRes.data) {
+        const d = weatherRes.data;
+        if (d.current) {
+          current = {
+            temperature: d.current.temperature_2m,
+            humidity: d.current.relative_humidity_2m,
+            precipitation: d.current.precipitation,
+            windSpeed: d.current.wind_speed_10m,
+            conditionCode: d.current.weather_code
+          };
+        }
+        
+        if (d.daily) {
+          for (let i = 0; i < 3; i++) {
+            forecast.push({
+              date: d.daily.time[i],
+              maxTemp: d.daily.temperature_2m_max[i],
+              minTemp: d.daily.temperature_2m_min[i],
+              rainProb: d.daily.precipitation_probability_max[i],
+              conditionCode: d.daily.weather_code[i]
+            });
+          }
+        }
+      }
+    } catch (weatherErr) {
+      console.error("Weather API Error:", weatherErr.message);
+      return res.status(502).json({ error: 'Failed to fetch weather data from provider.' });
+    }
+
+    res.json({
+      location: { city, state, lat, lon },
+      current,
+      forecast
+    });
+
   } catch (error) {
-    res.status(500).json({ error: 'Failed to predict crop' });
+    console.error("Weather Route Error:", error);
+    res.status(500).json({ error: 'Internal server error while fetching weather.' });
+  }
+});
+
+// Crop Suggestion API
+app.post('/api/crop-suggest', async (req, res) => {
+  try {
+    const { cropName, season, soilType, goal, weather } = req.body;
+
+    if (!cropName || !season || !soilType || !goal) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Mock crop database with weather considerations
+    const cropDatabase = {
+      wheat: {
+        seasons: ['rabi'],
+        soils: ['alluvial', 'black'],
+        weather: { temp: [10, 25], humidity: [40, 70] },
+        suggestions: ['Durum Wheat', 'Bread Wheat', 'Emmer Wheat']
+      },
+      rice: {
+        seasons: ['kharif'],
+        soils: ['alluvial', 'clay'],
+        weather: { temp: [20, 35], humidity: [60, 90] },
+        suggestions: ['Basmati Rice', 'Jasmine Rice', 'Brown Rice']
+      },
+      tomato: {
+        seasons: ['kharif', 'rabi', 'zaid'],
+        soils: ['alluvial', 'red', 'black'],
+        weather: { temp: [15, 30], humidity: [50, 80] },
+        suggestions: ['Cherry Tomato', 'Beefsteak Tomato', 'Roma Tomato']
+      },
+      potato: {
+        seasons: ['rabi'],
+        soils: ['alluvial', 'sandy'],
+        weather: { temp: [10, 25], humidity: [40, 70] },
+        suggestions: ['Russet Potato', 'Yukon Gold', 'Red Potato']
+      },
+      maize: {
+        seasons: ['kharif'],
+        soils: ['alluvial', 'black'],
+        weather: { temp: [20, 35], humidity: [50, 80] },
+        suggestions: ['Sweet Corn', 'Field Corn', 'Popcorn']
+      }
+    };
+
+    const cropData = cropDatabase[cropName.toLowerCase()];
+    let suggestions = [];
+    let tips = [];
+
+    if (cropData) {
+      // Check compatibility
+      const seasonMatch = cropData.seasons.includes(season);
+      const soilMatch = cropData.soils.includes(soilType);
+      const tempMatch = weather?.temperature >= cropData.weather.temp[0] && weather?.temperature <= cropData.weather.temp[1];
+      const humidityMatch = weather?.humidity >= cropData.weather.humidity[0] && weather?.humidity <= cropData.weather.humidity[1];
+
+      let confidence = 0;
+      if (seasonMatch) confidence += 30;
+      if (soilMatch) confidence += 30;
+      if (tempMatch) confidence += 20;
+      if (humidityMatch) confidence += 20;
+
+      suggestions = cropData.suggestions.map(name => ({
+        name,
+        confidence: Math.min(confidence, 100),
+        description: `${name} is suitable for ${season} season with ${soilType} soil.`,
+        benefits: seasonMatch && soilMatch ? ['High yield potential', 'Disease resistant'] : ['Moderate yield', 'Requires monitoring']
+      }));
+
+      // Generate tips based on goal
+      switch (goal) {
+        case 'yield':
+          tips = [
+            'Use high-quality seeds and proper spacing',
+            'Ensure adequate irrigation and nutrient management',
+            'Monitor for pests and apply preventive measures',
+            'Harvest at optimal maturity for maximum yield'
+          ];
+          break;
+        case 'organic':
+          tips = [
+            'Use organic fertilizers like compost and manure',
+            'Implement natural pest control methods',
+            'Avoid chemical pesticides and herbicides',
+            'Practice crop rotation for soil health'
+          ];
+          break;
+        case 'fast':
+          tips = [
+            'Choose fast-maturing varieties',
+            'Provide optimal growing conditions',
+            'Use growth promoters and proper spacing',
+            'Monitor soil moisture regularly'
+          ];
+          break;
+        case 'drought':
+          tips = [
+            'Select drought-resistant varieties',
+            'Implement water conservation techniques',
+            'Use mulch to retain soil moisture',
+            'Plant during optimal rainfall periods'
+          ];
+          break;
+        default:
+          tips = [
+            'Follow standard agricultural practices',
+            'Monitor weather conditions regularly',
+            'Maintain proper soil health',
+            'Consult local agricultural extension services'
+          ];
+      }
+
+      // Weather-specific tips
+      if (weather) {
+        if (weather.temperature > 35) {
+          tips.push('Provide shade and additional irrigation due to high temperatures');
+        }
+        if (weather.humidity > 80) {
+          tips.push('Monitor for fungal diseases in high humidity conditions');
+        }
+        if (weather.precipitation > 50) {
+          tips.push('Ensure proper drainage to prevent waterlogging');
+        }
+      }
+    } else {
+      // Generic suggestions for unknown crops
+      suggestions = [
+        {
+          name: 'Mixed Cropping',
+          confidence: 60,
+          description: 'Consider mixed cropping for better risk management.',
+          benefits: ['Risk diversification', 'Better resource utilization']
+        },
+        {
+          name: 'Local Varieties',
+          confidence: 70,
+          description: 'Use locally adapted varieties for better performance.',
+          benefits: ['Climate adaptation', 'Higher success rate']
+        }
+      ];
+
+      tips = [
+        'Consult local agricultural experts',
+        'Test soil conditions before planting',
+        'Start with small plots for testing',
+        'Monitor weather patterns closely'
+      ];
+    }
+
+    res.json({
+      crops: suggestions,
+      tips: tips,
+      weather: weather,
+      input: { cropName, season, soilType, goal }
+    });
+
+  } catch (error) {
+    console.error("Crop Suggestion Error:", error);
+    res.status(500).json({ error: 'Internal server error while generating suggestions.' });
   }
 });
 
